@@ -67,6 +67,39 @@ required dependencies, including:
 Once the Docker containers are running, you can access the **Grafana UI** at:
 [http://localhost:3000/](http://localhost:3000/)
 
+## Testing the ASP.NET Core API with curl
+
+The sample exposes a single controller endpoint:
+
+- `GET /WeatherForecast`
+
+By default (see `appsettings.json`), Kestrel listens on:
+
+- HTTP: `http://localhost:5010`
+- HTTPS: `https://localhost:5011`
+
+Examples:
+
+
+```bash
+# Call the API over HTTPS (dev cert); -k skips certificate validation
+curl -sS -k https://localhost:5011/WeatherForecast | jq .
+```
+
+```bash
+# Force a specific trace context to verify propagation
+curl -sS -k \
+  -H 'traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01' \
+  https://localhost:5011/WeatherForecast | jq
+```
+
+```bash
+# Generate a bit of load/telemetry
+for i in $(seq 1 10); do
+  curl -sS -k https://localhost:5011/WeatherForecast >/dev/null
+done
+```
+
 ## References
 
 - [ASP.NET Core](https://learn.microsoft.com/aspnet/core/introduction-to-aspnet-core)

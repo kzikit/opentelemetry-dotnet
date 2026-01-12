@@ -5,7 +5,7 @@ services:
     image: otel/opentelemetry-collector:0.143.1@sha256:e38787c822875f4afe459a4e4b798b0cbfb7372669f06643ad293793d25762ce
     command: [ "--config=/etc/otel-collector.yaml" ]
     volumes:
-      - ./otel-collector.yaml:/etc/otel-collector.yaml
+      - ./otel-collector.yaml:/etc/otel-collector.yaml:Z
     ports:
       - "4317:4317"
       - "4318:4318"
@@ -14,10 +14,15 @@ services:
   # Exports Traces to Tempo
   tempo:
     image: grafana/tempo:2.9.0@sha256:65a5789759435f1ef696f1953258b9bbdb18eb571d5ce711ff812d2e128288a4
+    # Tempo runs as non-root by default. With bind mounts, the host directory must be writable by
+    # the container user; otherwise Tempo fails with "permission denied" when creating /tmp/tempo/blocks.
+    # For this example we run Tempo as root to avoid host permission pitfalls on Linux/SELinux setups.
+    user: "0:0"
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
-      - ./tempo.yaml:/etc/tempo.yaml
-      - ./tempo-data:/tmp/tempo
+      - ./tempo.yaml:/etc/tempo.yaml:Z
+      # Data dir for local storage.
+      - ./.tempo-data:/tmp/tempo:Z
     ports:
       - "3200"  # tempo
       - "4317"  # otlp grpc
@@ -31,7 +36,7 @@ services:
       - --web.enable-remote-write-receiver
       - --enable-feature=exemplar-storage
     volumes:
-      - ./prometheus.yaml:/etc/prometheus.yaml
+      - ./prometheus.yaml:/etc/prometheus.yaml:Z
     ports:
       - "9090:9090"
 
@@ -39,7 +44,7 @@ services:
   grafana:
     image: grafana/grafana:12.3.1@sha256:2175aaa91c96733d86d31cf270d5310b278654b03f5718c59de12a865380a31f
     volumes:
-      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:Z
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin

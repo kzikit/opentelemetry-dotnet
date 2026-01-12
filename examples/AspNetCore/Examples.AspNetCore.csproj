@@ -3,6 +3,13 @@
   <PropertyGroup>
     <TargetFramework>$(DefaultTargetFrameworkForExampleApps)</TargetFramework>
     <NoWarn>$(NoWarn);CA1515</NoWarn>
+    <!--
+      Workaround for some Linux/OpenSSL 3 setups where strong-name signing can fail with:
+      Interop+Crypto+OpenSslCryptographicException: ... invalid digest
+      PublicSign preserves the strong-name public key/token (for InternalsVisibleTo) without doing
+      the OpenSSL-backed signature operation.
+    -->
+    <PublicSign Condition="'$(OS)' != 'Windows_NT' AND '$(PublicSign)' == ''">true</PublicSign>
   </PropertyGroup>
 
   <ItemGroup>

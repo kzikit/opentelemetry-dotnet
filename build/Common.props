@@ -4,6 +4,16 @@
     <SignAssembly>true</SignAssembly>
     <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)debug.snk</AssemblyOriginatorKeyFile>
+    <!--
+      Note:
+      - On Linux, strong-name signing uses OpenSSL (RSAOpenSsl). Some distros / OpenSSL 3 configurations
+        can reject the digest algorithm used for strong-name signing, resulting in:
+        Interop+Crypto+OpenSslCryptographicException: ... invalid digest
+      - Defaulting to PublicSign on non-Windows avoids the OpenSSL signature operation while preserving
+        the strong-name public key/token (needed for InternalsVisibleTo).
+      - Override with -p:PublicSign=false (or set PublicSign explicitly) if full signing is desired.
+    -->
+    <PublicSign Condition="'$(OS)' != 'Windows_NT' AND '$(PublicSign)' == ''">true</PublicSign>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
