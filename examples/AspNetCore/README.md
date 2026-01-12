@@ -21,15 +21,15 @@ flowchart LR
         AspNetCore["ASP.NET Core App"]
     end
 
-    subgraph Collector["OTel Collector :4317/:4318"]
-        OTLP_Receiver["OTLP Receiver"]
+    subgraph Collector["OTel Collector (OTLP/gRPC :4317, OTLP/HTTP :4318)"]
+        OTLP_Receiver["OTLP Receiver<br/>(gRPC :4317, HTTP :4318)"]
         Traces_Pipeline["Traces Pipeline"]
-        Metrics_Pipeline["Metrics Pipeline"]
+        Metrics_Pipeline["Metrics Pipeline<br/>(Prometheus exporter :9201)"]
         Logs_Pipeline["Logs Pipeline"]
     end
 
     subgraph Backends
-        Tempo["Tempo :4317"]
+        Tempo["Tempo (OTLP/gRPC :4317, OTLP/HTTP :4318; API :3200)"]
         Prometheus["Prometheus :9090"]
     end
 
@@ -37,13 +37,13 @@ flowchart LR
         Grafana["Grafana :3000"]
     end
 
-    AspNetCore -->|"OTLP (gRPC/HTTP)"| OTLP_Receiver
+    AspNetCore -->|"OTLP (gRPC :4317 / HTTP :4318)"| OTLP_Receiver
     OTLP_Receiver --> Traces_Pipeline
     OTLP_Receiver --> Metrics_Pipeline
     OTLP_Receiver --> Logs_Pipeline
 
-    Traces_Pipeline -->|"OTLP"| Tempo
-    Metrics_Pipeline -->|"scrape :9201"| Prometheus
+    Traces_Pipeline -->|"OTLP/gRPC :4317"| Tempo
+    Prometheus -->|"scrape http :9201"| Metrics_Pipeline
 
     Tempo --> Grafana
     Prometheus --> Grafana
