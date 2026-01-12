@@ -13,6 +13,42 @@ service name, version and the machine on which this program is running.
 The sample rate is set to emit all the traces using `AlwaysOnSampler`.
 You can try out different samplers like `TraceIdRatioBasedSampler`.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph App
+        AspNetCore["ASP.NET Core App"]
+    end
+
+    subgraph Collector["OTel Collector :4317/:4318"]
+        OTLP_Receiver["OTLP Receiver"]
+        Traces_Pipeline["Traces Pipeline"]
+        Metrics_Pipeline["Metrics Pipeline"]
+        Logs_Pipeline["Logs Pipeline"]
+    end
+
+    subgraph Backends
+        Tempo["Tempo :4317"]
+        Prometheus["Prometheus :9090"]
+    end
+
+    subgraph UI
+        Grafana["Grafana :3000"]
+    end
+
+    AspNetCore -->|"OTLP (gRPC/HTTP)"| OTLP_Receiver
+    OTLP_Receiver --> Traces_Pipeline
+    OTLP_Receiver --> Metrics_Pipeline
+    OTLP_Receiver --> Logs_Pipeline
+
+    Traces_Pipeline -->|"OTLP"| Tempo
+    Metrics_Pipeline -->|"scrape :9201"| Prometheus
+
+    Tempo --> Grafana
+    Prometheus --> Grafana
+```
+
 ## Running Dependencies via Docker
 
 The example by default writes telemetry to stdout. To enable telemetry export
